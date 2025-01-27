@@ -1,4 +1,4 @@
-import {Text, View} from "react-native";
+import {Text, View, StyleSheet} from "react-native";
 import {Link} from "expo-router";
 
 export default function Index(){
@@ -9,7 +9,7 @@ export default function Index(){
             justifyContent:"center",
             alignItems:"center",
         }}>
-            <Text className="font-bold text-lg my-10">Welcome to Estate Connect </Text>
+            <Text style={styles.title}>Welcome to Estate Connect </Text>
             <Link href="/sign-in">Sign In</Link>
             <Link href="/explore">Explore</Link>
             <Link href="/profile">Profile</Link>
@@ -18,3 +18,11 @@ export default function Index(){
         </View>
     )
 }
+
+const styles = StyleSheet.create({
+    title: {
+        marginBottom: 10,
+        fontSize: 20,
+        fontFamily: "Rubik-Bold"
+    }
+})
