@@ -1,4 +1,4 @@
-import {Account, Avatars, Client, OAuthProvider} from "react-native-appwrite";
+import {Account, Avatars, Client, Databases, OAuthProvider, Query} from "react-native-appwrite";
 import * as Linking from 'expo-linking';
 import {openAuthSessionAsync} from "expo-web-browser";
 
@@ -6,6 +6,12 @@ export const config = {
     platform: 'com.jsm.restate',
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+    databaseId:process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
+    galleriesCollectionId:process.env.EXPO_PUBLIC_APPWRITE_GALLERIES_ID,
+    reviewsCollectionId:process.env.EXPO_PUBLIC_APPWRITE_REVIEWS_ID,
+    agentsCollectionId:process.env.EXPO_PUBLIC_APPWRITE_AGENT_ID,
+    propertiesCollectionId:process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_ID
+
 }
 
 export const client = new Client();
@@ -17,6 +23,8 @@ client
 
 export const avatar = new Avatars(client);
 export const account = new Account(client);
+export const databases = new Databases(client);
+
 
 export async function login() {
     try {
@@ -76,5 +84,53 @@ export async function getCurrentUser() {
     } catch (error) {
         console.log(error);
         return null;
+    }
+}
+export async function getLatestProperties(){
+    try{
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.propertiesCollectionId!,
+            [Query.orderDesc("$createdAt"), Query.limit(5)] // Changed to orderDesc to get latest
+
+        )
+        console.log('Latest properties result:', result); // Add logging
+
+        return result.documents;
+    }catch (error){
+        console.error('Latest properties error:', error);
+        console.error(error);
+        return [];
+    }
+}
+export async function getProperties({filter,query,limit}:{
+    filter:string,
+    query:string,
+    limit?:number,
+}){
+    try{
+        const buildQuery = [Query.orderAsc('$createdAt')];
+
+        if (filter && filter !== "All")
+            buildQuery.push(Query.equal("type", filter));
+        if(query){
+            buildQuery.push(
+                Query.or([
+                        Query.search('name',query),
+                        Query.search('address',query),
+                        Query.search('type',query),
+                ])
+            );
+        }
+        if(limit) buildQuery.push(Query.limit(limit));
+        const result = await databases.listDocuments(
+            config.databaseId!,
+            config.propertiesCollectionId!,
+            buildQuery,
+        )
+        return result.documents;
+    }catch (error){
+        console.error(error);
+        return [];
     }
 }
