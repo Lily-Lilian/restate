@@ -9,6 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -20,6 +21,7 @@ import { getPropertyById } from "@/lib/appwrite";
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const navigation = useNavigation();
 
   const windowHeight = Dimensions.get("window").height;
 
@@ -29,6 +31,10 @@ const Property = () => {
       id: id!,
     },
   });
+
+  // const handleBookNow = () => {
+  //   navigation.navigate("BookingScreen", { propertyId: id });
+  // };
 
   return (
     <View>
@@ -268,7 +274,9 @@ const Property = () => {
             </Text>
           </View>
 
-          <TouchableOpacity className="flex-1 flex flex-row items-center justify-center bg-primary-300 py-3 rounded-full shadow-md shadow-zinc-400">
+          <TouchableOpacity
+            className="flex-1 flex flex-row items-center justify-center bg-primary-300 py-3 rounded-full shadow-md shadow-zinc-400"
+          >
             <Text className="text-white text-lg text-center font-rubik-bold">
               Book Now
             </Text>

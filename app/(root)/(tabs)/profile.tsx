@@ -11,6 +11,7 @@ import {
 
 import { logout } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
+import { useNavigation } from "@react-navigation/native";
 
 import icons from "@/constants/icons";
 import { settings } from "@/constants/data";
@@ -47,6 +48,7 @@ const SettingsItem = ({
 
 const Profile = () => {
   const { user, refetch } = useGlobalContext();
+  const navigation = useNavigation();
 
   const handleLogout = async () => {
     const result = await logout();
@@ -86,6 +88,11 @@ const Profile = () => {
         <View className="flex flex-col mt-10">
           <SettingsItem icon={icons.calendar} title="My Bookings" />
           <SettingsItem icon={icons.wallet} title="Payments" />
+          <SettingsItem
+            icon={icons.info}
+            title="Add Property"
+            onPress={() => navigation.navigate("AddProperty" as never)}
+          />
         </View>
 
         <View className="flex flex-col mt-5 border-t pt-5 border-primary-200">

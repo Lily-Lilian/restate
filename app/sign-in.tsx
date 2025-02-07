@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Alert,
@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  TextInput,
 } from "react-native";
 
 import { login } from "@/lib/appwrite";
@@ -20,6 +21,9 @@ const Auth = () => {
 
   if (!loading && isLogged) return <Redirect href="/" />;
 
+  const [propertyType, setPropertyType] = useState("");
+  const [propertyDetails, setPropertyDetails] = useState("");
+
   const handleLogin = async () => {
     const result = await login();
     if (result) {
@@ -27,6 +31,14 @@ const Auth = () => {
     } else {
       Alert.alert("Error", "Failed to login");
     }
+  };
+
+  const handlePropertySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Property Type:", propertyType);
+    console.log("Property Details:", propertyDetails);
+    setPropertyType("");
+    setPropertyDetails("");
   };
 
   return (
