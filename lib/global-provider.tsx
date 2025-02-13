@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   avatar: string;
+  role: string;
 }
 
 interface GlobalContextType {
@@ -42,20 +43,20 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
   const isLogged = !!user;
 
   return (
-      <GlobalContext.Provider
-          value={{
-            isLogged,
-            user,
-            loading,
-            refetch,
-            isEmailVerified,
-            verifiedEmail,
-            setIsEmailVerified,
-            setVerifiedEmail,
-          }}
-      >
-        {children}
-      </GlobalContext.Provider>
+    <GlobalContext.Provider
+      value={{
+        isLogged,
+        user,
+        loading,
+        refetch,
+        isEmailVerified,
+        verifiedEmail,
+        setIsEmailVerified,
+        setVerifiedEmail,
+      }}
+    >
+      {children}
+    </GlobalContext.Provider>
   );
 };
 

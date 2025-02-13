@@ -18,9 +18,11 @@ import NoResults from "@/components/NoResults";
 
 import { getProperties } from "@/lib/appwrite";
 import { useAppwrite } from "@/lib/useAppwrite";
+import { useGlobalContext } from "@/lib/global-provider";
 
 const Explore = () => {
   const params = useLocalSearchParams<{ query?: string; filter?: string }>();
+  const { user } = useGlobalContext();
 
   const {
     data: properties,
@@ -44,13 +46,27 @@ const Explore = () => {
 
   const handleCardPress = (id: string) => router.push(`/properties/${id}`);
 
+  const handleEditPress = (id: string) => {
+    router.push({ pathname: "/AddProperty", params: { id } });
+  };
+
   return (
     <SafeAreaView className="h-full bg-white">
       <FlatList
         data={properties}
         numColumns={2}
         renderItem={({ item }) => (
-          <Card item={item} onPress={() => handleCardPress(item.$id)} />
+          <View>
+            <Card item={item} onPress={() => handleCardPress(item.$id)} />
+            {user?.role === "agent" && (
+              <TouchableOpacity
+                onPress={() => handleEditPress(item.$id)}
+                className="bg-primary-300 p-2 rounded mt-2"
+              >
+                <Text className="text-white text-center">Edit</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
         keyExtractor={(item) => item.$id}
         contentContainerClassName="pb-32"

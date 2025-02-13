@@ -17,7 +17,6 @@ import {
   databases,
   storage,
   ID,
-  account,
 } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 
@@ -31,8 +30,6 @@ const AddProperty = () => {
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [address, setAddress] = useState("");
-  const [imageId, setImageId] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
   const [price, setPrice] = useState("");
 
   const propertyTypes = [
@@ -50,8 +47,8 @@ const AddProperty = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
-        "Permission Required",
-        "Sorry, we need camera roll permissions to upload images."
+          "Permission Required",
+          "Sorry, we need camera roll permissions to upload images."
       );
       return;
     }
@@ -84,9 +81,9 @@ const AddProperty = () => {
       };
 
       await storage.createFile(
-        process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID!,
-        fileId,
-        file
+          process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID!,
+          fileId,
+          file
       );
 
       const imageUrl = `${process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT}/v1/storage/buckets/${process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID}/files/${fileId}/view`;
@@ -99,14 +96,6 @@ const AddProperty = () => {
   };
 
   const handleSubmit = async () => {
-    if (!isVerified) {
-      Alert.alert(
-        "Error",
-        "Please verify your email address before adding a property."
-      );
-      return;
-    }
-
     if (!propertyType || !propertyDetails || !price) {
       Alert.alert("Validation Error", "Please fill in all required fields");
       return;
@@ -123,7 +112,6 @@ const AddProperty = () => {
       let uploadedImageId = null;
       if (previewImage) {
         uploadedImageId = await uploadImage(previewImage);
-        setImageId(uploadedImageId);
       }
 
       const propertyData = {
@@ -145,10 +133,10 @@ const AddProperty = () => {
       };
 
       await databases.createDocument(
-        process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
-        process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
-        ID.unique(),
-        propertyData
+          process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+          process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
+          ID.unique(),
+          propertyData
       );
 
       Alert.alert("Success", "Property added successfully!", [

@@ -32,9 +32,9 @@ const Property = () => {
     },
   });
 
-  // const handleBookNow = () => {
-  //   navigation.navigate("BookingScreen", { propertyId: id });
-  // };
+  const handleBookNow = () => {
+    router.push({ pathname: "/BookingScreen", params: { propertyId: id } });
+  };
 
   return (
     <View>
@@ -275,6 +275,7 @@ const Property = () => {
           </View>
 
           <TouchableOpacity
+            onPress={handleBookNow}
             className="flex-1 flex flex-row items-center justify-center bg-primary-300 py-3 rounded-full shadow-md shadow-zinc-400"
           >
             <Text className="text-white text-lg text-center font-rubik-bold">
