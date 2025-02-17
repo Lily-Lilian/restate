@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Image,
@@ -8,11 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { databases } from "@/lib/appwrite";
+import { Query } from "appwrite";
 import { logout } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
 import { useNavigation } from "@react-navigation/native";
-
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import icons from "@/constants/icons";
 import { settings } from "@/constants/data";
 
@@ -48,7 +50,39 @@ const SettingsItem = ({
 
 const Profile = () => {
   const { user, refetch } = useGlobalContext();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+
+    try {
+      // Check for admin status
+      const adminResponse = await databases.listDocuments(
+        process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.EXPO_PUBLIC_APPWRITE_ADMINS_COLLECTION_ID!,
+        [Query.equal("email", user.email)]
+      );
+      setIsAdmin(adminResponse.documents.length > 0);
+
+      // Check for super admin status
+      const superAdminResponse = await databases.listDocuments(
+        process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.EXPO_PUBLIC_APPWRITE_ADMINS_COLLECTION_ID!,
+        [Query.equal("email", user.email), Query.equal("role", "super_admin")]
+      );
+      setIsSuperAdmin(superAdminResponse.documents.length > 0);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+    }
+  };
 
   const handleLogout = async () => {
     const result = await logout();
@@ -86,9 +120,28 @@ const Profile = () => {
         </View>
 
         <View className="flex flex-col mt-10">
-        <SettingsItem icon={icons.calendar} title="My Bookings"  onPress={() => navigation.navigate("MyBookings" as never)}
+          <SettingsItem
+            icon={icons.calendar}
+            title="My Bookings"
+            onPress={() => navigation.navigate("MyBookings" as never)}
           />
           <SettingsItem icon={icons.wallet} title="Payments" />
+          {isAdmin && (
+            <SettingsItem
+              icon={icons.shield}
+              title="Admin Dashboard"
+              onPress={() => {
+                if (isSuperAdmin) {
+                  navigation.navigate("AdminDashboard" as never);
+                } else {
+                  Alert.alert(
+                    "Access Denied",
+                    "You don't have permission to access the dashboard."
+                  );
+                }
+              }}
+            />
+          )}
           <SettingsItem
             icon={icons.info}
             title="Add Property"

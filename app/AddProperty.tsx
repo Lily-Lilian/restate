@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Alert,
@@ -13,24 +13,23 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import {
-  databases,
-  storage,
-  ID,
-} from "@/lib/appwrite";
+import { databases, storage, ID } from "@/lib/appwrite";
 import { useGlobalContext } from "@/lib/global-provider";
+import { Query } from "appwrite";
+import { ArrowLeft } from "lucide-react-native";
 
 const AddProperty = () => {
   const router = useRouter();
-  const { user } = useGlobalContext();
+  const { user, isAgent } = useGlobalContext();
 
-  const [propertyType, setPropertyType] = useState("");
+  const [ , setPropertyType] = useState("");
   const [propertyDetails, setPropertyDetails] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [address, setAddress] = useState("");
   const [price, setPrice] = useState("");
+  const [checkingAgentStatus, setCheckingAgentStatus] = useState(true);
 
   const propertyTypes = [
     "House",
@@ -43,12 +42,83 @@ const AddProperty = () => {
     "Other",
   ];
 
+  useEffect(() => {
+    checkAgentStatus();
+  }, [user]);
+
+  const checkAgentStatus = async () => {
+    if (!user) {
+      setCheckingAgentStatus(false);
+      return;
+    }
+
+    try {
+      // First check if user is an approved agent or has a pending application
+      const agentResponse = await databases.listDocuments(
+        process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
+        [Query.equal("user_id", user.$id)]
+      );
+
+      if (agentResponse.documents.length > 0) {
+        const agentDoc = agentResponse.documents[0];
+        if (agentDoc.status === "pending") {
+          Alert.alert(
+            "Application Pending",
+            "Your agent application is currently under review.",
+            [
+              {
+                text: "OK",
+                onPress: () => router.back(),
+              },
+            ]
+          );
+        }
+        setCheckingAgentStatus(false);
+      } else {
+        // No application found, show apply prompt
+        Alert.alert(
+          "Access Denied",
+          "You need to be an approved agent to add properties.",
+          [
+            {
+              text: "Apply Now",
+              onPress: () => router.push("/ApplyAgent"),
+            },
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+        setCheckingAgentStatus(false);
+      }
+    } catch (error) {
+      console.error("Error checking agent status:", error);
+      setCheckingAgentStatus(false);
+    }
+  };
+
+  if (checkingAgentStatus) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <ActivityIndicator size="large" color="#0066FF" />
+        <Text className="mt-4 text-gray-600">Verifying agent status...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (isAgent === false) {
+    return null;
+  }
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
-          "Permission Required",
-          "Sorry, we need camera roll permissions to upload images."
+        "Permission Required",
+        "Sorry, we need camera roll permissions to upload images."
       );
       return;
     }
@@ -81,9 +151,9 @@ const AddProperty = () => {
       };
 
       await storage.createFile(
-          process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID!,
-          fileId,
-          file
+        process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID!,
+        fileId,
+        file
       );
 
       const imageUrl = `${process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT}/v1/storage/buckets/${process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID}/files/${fileId}/view`;
@@ -133,10 +203,10 @@ const AddProperty = () => {
       };
 
       await databases.createDocument(
-          process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
-          process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
-          ID.unique(),
-          propertyData
+        process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+        process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
+        ID.unique(),
+        propertyData
       );
 
       Alert.alert("Success", "Property added successfully!", [
@@ -155,165 +225,175 @@ const AddProperty = () => {
 
   return (
     <SafeAreaView className="bg-white h-full">
-      <ScrollView className="flex-1 px-6">
-        <Text className="text-2xl font-rubik-bold text-[#1B1B1B] mt-6 mb-8">
-          Add New Property
-        </Text>
+      <View className="relative">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute left-4 top-4 z-10"
+        >
+          <ArrowLeft size={24} color="black" />
+        </TouchableOpacity>
+        <ScrollView className="flex-1 px-6">
+          <Text className="text-2xl font-rubik-bold text-[#1B1B1B] mt-6 mb-8">
+            Add New Property
+          </Text>
 
-        <View className="space-y-6">
-          {/* Property Type Selection */}
-          <View>
-            <Text className="text-base text-[#6B7280] mb-2">Property Type</Text>
-            <TouchableOpacity
-              onPress={() => setShowTypeModal(true)}
-              className="border border-[#E5E7EB] rounded-lg p-4 flex-row justify-between items-center"
-            >
-              <Text
-                className={propertyType ? "text-[#1B1B1B]" : "text-[#6B7280]"}
-              >
-                {propertyType || "Select property type"}
+          <View className="space-y-6">
+            {/* Property Type Selection */}
+            <View>
+              <Text className="text-base text-[#6B7280] mb-2">
+                Property Type
               </Text>
-              <Image
-                source={require("@/assets/icons/down-arrow.png")}
-                className="w-5 h-5"
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Price Input */}
-          <View>
-            <Text className="text-base text-[#6B7280] mb-2">Price</Text>
-            <TextInput
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-              className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
-              placeholder="Enter property price"
-            />
-          </View>
-
-          {/* Property Type Modal */}
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={showTypeModal}
-            onRequestClose={() => setShowTypeModal(false)}
-          >
-            <View className="flex-1 justify-end bg-black/50">
-              <View className="bg-white rounded-t-3xl p-6">
-                <Text className="text-xl font-rubik-medium text-[#1B1B1B] mb-4">
-                  Select Property Type
-                </Text>
-                {propertyTypes.map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => {
-                      setPropertyType(type);
-                      setShowTypeModal(false);
-                    }}
-                    className="py-4 border-b border-[#E5E7EB]"
-                  >
-                    <Text className="text-lg text-[#1B1B1B]">{type}</Text>
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                  onPress={() => setShowTypeModal(false)}
-                  className="mt-4 py-4 bg-[#0066FF] rounded-full"
-                >
-                  <Text className="text-white text-center font-medium">
-                    Close
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Property Details */}
-          <View>
-            <Text className="text-base text-[#6B7280] mb-2">
-              Property Details
-            </Text>
-            <TextInput
-              value={propertyDetails}
-              onChangeText={setPropertyDetails}
-              multiline
-              numberOfLines={4}
-              className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
-              placeholder="Enter property details"
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Address Input */}
-          <View>
-            <Text className="text-base text-[#6B7280] mb-2">Address</Text>
-            <TextInput
-              value={address}
-              onChangeText={setAddress}
-              className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
-              placeholder="Enter property address"
-            />
-          </View>
-
-          {/* Property Image */}
-          <View>
-            <Text className="text-base text-[#6B7280] mb-2">
-              Property Image
-            </Text>
-
-            {!previewImage ? (
               <TouchableOpacity
-                onPress={pickImage}
-                className="border border-dashed border-[#E5E7EB] rounded-lg p-8 items-center"
+                onPress={() => setShowTypeModal(true)}
+                className="border border-[#E5E7EB] rounded-lg p-4 flex-row justify-between items-center"
               >
+                <Text
+                  className={propertyType ? "text-[#1B1B1B]" : "text-[#6B7280]"}
+                >
+                  {propertyType || "Select property type"}
+                </Text>
                 <Image
-                  source={require("@/assets/icons/upload.png")}
-                  className="w-8 h-8 mb-4"
+                  source={require("@/assets/icons/down-arrow.png")}
+                  className="w-5 h-5"
                   resizeMode="contain"
                 />
-                <Text className="text-base text-[#4B5563]">
-                  Tap to upload an image
-                </Text>
-                <Text className="text-sm text-[#6B7280] mt-1">
-                  PNG, JPG, GIF supported
-                </Text>
               </TouchableOpacity>
-            ) : (
-              <View className="relative">
-                <Image
-                  source={{ uri: previewImage }}
-                  className="w-full h-48 rounded-lg"
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  onPress={() => setPreviewImage(null)}
-                  className="absolute top-2 right-2 bg-red-500 rounded-full p-2"
-                >
-                  <Text className="text-white">✕</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+            </View>
 
-          {/* Add Property Button */}
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-            className={`bg-[#0066FF] rounded-full py-4 mt-8 ${
-              isSubmitting ? "opacity-70" : ""
-            }`}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-lg font-medium text-white text-center">
-                Add Property
+            {/* Price Input */}
+            <View>
+              <Text className="text-base text-[#6B7280] mb-2">Price</Text>
+              <TextInput
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="numeric"
+                className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
+                placeholder="Enter property price"
+              />
+            </View>
+
+            {/* Property Type Modal */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={showTypeModal}
+              onRequestClose={() => setShowTypeModal(false)}
+            >
+              <View className="flex-1 justify-end bg-black/50">
+                <View className="bg-white rounded-t-3xl p-6">
+                  <Text className="text-xl font-rubik-medium text-[#1B1B1B] mb-4">
+                    Select Property Type
+                  </Text>
+                  {propertyTypes.map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      onPress={() => {
+                        setPropertyType(type);
+                        setShowTypeModal(false);
+                      }}
+                      className="py-4 border-b border-[#E5E7EB]"
+                    >
+                      <Text className="text-lg text-[#1B1B1B]">{type}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    onPress={() => setShowTypeModal(false)}
+                    className="mt-4 py-4 bg-[#0066FF] rounded-full"
+                  >
+                    <Text className="text-white text-center font-medium">
+                      Close
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Property Details */}
+            <View>
+              <Text className="text-base text-[#6B7280] mb-2">
+                Property Details
               </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+              <TextInput
+                value={propertyDetails}
+                onChangeText={setPropertyDetails}
+                multiline
+                numberOfLines={4}
+                className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
+                placeholder="Enter property details"
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Address Input */}
+            <View>
+              <Text className="text-base text-[#6B7280] mb-2">Address</Text>
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                className="border border-[#E5E7EB] bg-[#F9FAFB] rounded-lg p-4 text-[#1B1B1B]"
+                placeholder="Enter property address"
+              />
+            </View>
+
+            {/* Property Image */}
+            <View>
+              <Text className="text-base text-[#6B7280] mb-2">
+                Property Image
+              </Text>
+
+              {!previewImage ? (
+                <TouchableOpacity
+                  onPress={pickImage}
+                  className="border border-dashed border-[#E5E7EB] rounded-lg p-8 items-center"
+                >
+                  <Image
+                    source={require("@/assets/icons/upload.png")}
+                    className="w-8 h-8 mb-4"
+                    resizeMode="contain"
+                  />
+                  <Text className="text-base text-[#4B5563]">
+                    Tap to upload an image
+                  </Text>
+                  <Text className="text-sm text-[#6B7280] mt-1">
+                    PNG, JPG, GIF supported
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View className="relative">
+                  <Image
+                    source={{ uri: previewImage }}
+                    className="w-full h-48 rounded-lg"
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setPreviewImage(null)}
+                    className="absolute top-2 right-2 bg-red-500 rounded-full p-2"
+                  >
+                    <Text className="text-white">✕</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Add Property Button */}
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              className={`bg-[#0066FF] rounded-full py-4 mt-8 ${
+                isSubmitting ? "opacity-70" : ""
+              }`}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-lg font-medium text-white text-center">
+                  Add Property
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

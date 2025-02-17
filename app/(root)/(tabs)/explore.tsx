@@ -24,6 +24,10 @@ const Explore = () => {
   const params = useLocalSearchParams<{ query?: string; filter?: string }>();
   const { user } = useGlobalContext();
 
+  // Ensure default values for filter and query
+  const filter = params.filter || "";
+  const query = params.query || "";
+
   const {
     data: properties,
     refetch,
@@ -31,16 +35,16 @@ const Explore = () => {
   } = useAppwrite({
     fn: getProperties,
     params: {
-      filter: params.filter!,
-      query: params.query!,
+      filter,
+      query,
     },
     skip: true,
   });
 
   useEffect(() => {
     refetch({
-      filter: params.filter!,
-      query: params.query!,
+      filter,
+      query,
     });
   }, [params.filter, params.query]);
 
@@ -50,10 +54,13 @@ const Explore = () => {
     router.push({ pathname: "/AddProperty", params: { id } });
   };
 
+  // Ensure properties is always an array
+  const propertyList = properties || [];
+
   return (
     <SafeAreaView className="h-full bg-white">
       <FlatList
-        data={properties}
+        data={propertyList}
         numColumns={2}
         renderItem={({ item }) => (
           <View>
@@ -101,7 +108,7 @@ const Explore = () => {
               <Filters />
 
               <Text className="text-xl font-rubik-bold text-black-300 mt-5">
-                Found {properties?.length} Properties
+                Found {propertyList.length} Properties
               </Text>
             </View>
           </View>

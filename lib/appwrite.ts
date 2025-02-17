@@ -26,7 +26,26 @@ export const config = {
   bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
   functionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_ID,
 };
+console.log("Appwrite Configuration:", {
+  endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || "MISSING",
+  projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID || "MISSING",
+  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID || "MISSING",
+  galleriesCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_GALLERIES_COLLECTION_ID || "MISSING",
+  reviewsCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID || "MISSING",
+  agentsCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID || "MISSING",
+  propertiesCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID || "MISSING",
+  bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID || "MISSING",
+  functionId: process.env.EXPO_PUBLIC_APPWRITE_FUNCTION_ID || "MISSING",
+  platform: config.platform || "MISSING",
+});
 
+if (!config.endpoint || !config.projectId || !config.platform) {
+  throw new Error("Missing required configuration");
+}
 export const client = new Client();
 client
   .setEndpoint(config.endpoint!)
