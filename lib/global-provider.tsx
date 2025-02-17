@@ -29,6 +29,7 @@ interface GlobalContextType {
   setIsEmailVerified: (status: boolean) => void;
   setVerifiedEmail: (email: string | null) => void;
   isAgent: boolean;
+  setIsAgent: () => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -52,33 +53,34 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
 
   const isLogged = !!user;
 
-  useEffect(() => {
-    const fetchUserAndAgentStatus = async () => {
-      if (user) {
-        try {
-          const response = await databases.listDocuments(
-            process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
-            process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
-            [
-              Query.equal("user_id", user.$id),
-              Query.equal("status", "approved"),
-            ]
-          );
+  const fetchUserAndAgentStatus = async () => {
+    if (user) {
+      try {
+        const response = await databases.listDocuments(
+          process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+          process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
+          [
+            Query.equal("user_id", user.$id),
+            Query.equal("status", "approved"),
+          ]
+        );
 
-          if (response.documents.length > 0) {
-            setIsAgent(true);
-          } else {
-            setIsAgent(false);
-          }
-        } catch (error) {
-          console.error("Error fetching agent status:", error);
+        
+        if (response.documents.length > 0) {
+          setIsAgent(true);
+        } else {
           setIsAgent(false);
         }
-      } else {
+        console.log("USER", user, response.documents, isAgent);
+      } catch (error) {
+        console.error("Error fetching agent status:", error);
         setIsAgent(false);
       }
-    };
-
+    } else {
+      setIsAgent(false);
+    }
+  };
+  useEffect(() => {
     fetchUserAndAgentStatus();
   }, [user]);
 
@@ -94,6 +96,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         setIsEmailVerified,
         setVerifiedEmail,
         isAgent,
+        setIsAgent: fetchUserAndAgentStatus,
       }}
     >
       {children}
