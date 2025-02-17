@@ -8,12 +8,12 @@ import {
   Query,
   Storage,
   Functions,
-} from "react-native-appwrite";
-import * as Linking from "expo-linking";
-import { openAuthSessionAsync } from "expo-web-browser";
+} from 'react-native-appwrite';
+import * as Linking from 'expo-linking';
+import { openAuthSessionAsync } from 'expo-web-browser';
 
-export const config = {
-  platform: "com.jsm.restate",
+export const config: Record<string, string | undefined> = {
+  platform: 'com.jsm.restate',
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
   databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
@@ -62,28 +62,28 @@ export { ID };
 
 export async function login() {
   try {
-    const redirectUri = Linking.createURL("/");
+    const redirectUri = Linking.createURL('/');
 
     const response = await account.createOAuth2Token(
       OAuthProvider.Google,
       redirectUri
     );
-    if (!response) throw new Error("Create OAuth2 token failed");
+    if (!response) throw new Error('Create OAuth2 token failed');
 
     const browserResult = await openAuthSessionAsync(
       response.toString(),
       redirectUri
     );
-    if (browserResult.type !== "success")
-      throw new Error("Create OAuth2 token failed");
+    if (browserResult.type !== 'success')
+      throw new Error('Create OAuth2 token failed');
 
     const url = new URL(browserResult.url);
-    const secret = url.searchParams.get("secret")?.toString();
-    const userId = url.searchParams.get("userId")?.toString();
-    if (!secret || !userId) throw new Error("Create OAuth2 token failed");
+    const secret = url.searchParams.get('secret')?.toString();
+    const userId = url.searchParams.get('userId')?.toString();
+    if (!secret || !userId) throw new Error('Create OAuth2 token failed');
 
     const session = await account.createSession(userId, secret);
-    if (!session) throw new Error("Failed to create session");
+    if (!session) throw new Error('Failed to create session');
 
     return true;
   } catch (error) {
@@ -94,7 +94,7 @@ export async function login() {
 
 export async function logout() {
   try {
-    const result = await account.deleteSession("current");
+    const result = await account.deleteSession('current');
     return result;
   } catch (error) {
     console.error(error);
@@ -121,7 +121,7 @@ export async function getLatestProperties() {
     const result = await databases.listDocuments(
       config.databaseId!,
       config.propertiesCollectionId!,
-      [Query.orderAsc("$createdAt"), Query.limit(5)]
+      [Query.orderAsc('$createdAt'), Query.limit(5)]
     );
     return result.documents;
   } catch (error) {
@@ -140,23 +140,23 @@ export async function getProperties({
   limit?: number;
 }) {
   try {
-    const buildQuery = [Query.orderDesc("$createdAt")];
+    const buildQuery = [Query.orderDesc('$createdAt')];
 
-    if (filter && filter !== "All") {
-      buildQuery.push(Query.equal("type", filter));
+    if (filter && filter !== 'All') {
+      buildQuery.push(Query.equal('type', filter));
     }
 
     if (query) {
       // For exact matches
       buildQuery.push(
         Query.or([
-          Query.equal("name", query),
-          Query.equal("address", query),
-          Query.equal("type", query),
+          Query.equal('name', query),
+          Query.equal('address', query),
+          Query.equal('type', query),
           // For partial/fuzzy matches
-          Query.search("name", query),
-          Query.search("address", query),
-          Query.search("type", query),
+          Query.search('name', query),
+          Query.search('address', query),
+          Query.search('type', query),
         ])
       );
     }

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Alert,
   Image,
@@ -10,37 +10,37 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-} from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import { databases, storage, ID, config } from "@/lib/appwrite";
-import { useGlobalContext } from "@/lib/global-provider";
-import { Query } from "appwrite";
-import { ArrowLeft } from "lucide-react-native";
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { databases, storage, ID, config } from '@/lib/appwrite';
+import { useGlobalContext } from '@/lib/global-provider';
+import { Query } from 'appwrite';
+import { ArrowLeft } from 'lucide-react-native';
 
 const AddProperty = () => {
   const router = useRouter();
   const { user, isAgent, setIsAgent } = useGlobalContext();
 
-  const [propertyType, setPropertyType] = useState("");
-  const [propertyDetails, setPropertyDetails] = useState("");
+  const [propertyType, setPropertyType] = useState('');
+  const [propertyDetails, setPropertyDetails] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [address, setAddress] = useState("");
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [address, setAddress] = useState('');
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
   const [checkingAgentStatus, setCheckingAgentStatus] = useState(true);
 
   const propertyTypes = [
-    "House",
-    "Townhouse",
-    "Condo",
-    "Duplex",
-    "Studio",
-    "Villa",
-    "Apartments",
-    "Other",
+    'House',
+    'Townhouse',
+    'Condo',
+    'Duplex',
+    'Studio',
+    'Villa',
+    'Apartments',
+    'Other',
   ];
 
   useEffect(() => {
@@ -58,68 +58,66 @@ const AddProperty = () => {
       const agentResponse = await databases.listDocuments(
         process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
         process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
-        [Query.equal("user_id", user.$id)]
+        [Query.equal('user_id', user.$id)]
       );
 
       setIsAgent();
       if (agentResponse.documents.length > 0) {
         const agentDoc = agentResponse.documents[0];
-        if (agentDoc.status === "pending") {
+        if (agentDoc.status === 'pending') {
           Alert.alert(
-            "Application Pending",
-            "Your agent application is currently under review.",
+            'Application Pending',
+            'Your agent application is currently under review.',
             [
               {
-                text: "OK",
+                text: 'OK',
                 onPress: () => router.back(),
               },
             ]
           );
-          
         }
         setCheckingAgentStatus(false);
-        console.log("USER STATUS: ", agentDoc.status);
-          
+        console.log('USER STATUS: ', agentDoc.status);
       } else {
         // No application found, show apply prompt
         Alert.alert(
-          "Access Denied",
-          "You need to be an approved agent to add properties.",
+          'Access Denied',
+          'You need to be an approved agent to add properties.',
           [
             {
-              text: "Apply Now",
-              onPress: () => router.push("/ApplyAgent"),
+              text: 'Apply Now',
+              onPress: () => router.push('/ApplyAgent'),
             },
             {
-              text: "Cancel",
-              style: "cancel",
+              text: 'Cancel',
+              style: 'cancel',
               onPress: () => router.back(),
             },
           ]
-        )
+        );
         setCheckingAgentStatus(false);
       }
     } catch (error) {
-      console.error("Error checking agent status:", error);
+      console.error('Error checking agent status:', error);
       setCheckingAgentStatus(false);
     }
   };
 
   if (checkingAgentStatus) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#0066FF" />
-        <Text className="mt-4 text-gray-600">Verifying agent status...</Text>
+      <SafeAreaView className='flex-1 bg-white justify-center items-center'>
+        <ActivityIndicator size='large' color='#0066FF' />
+        <Text className='mt-4 text-gray-600'>Verifying agent status...</Text>
       </SafeAreaView>
     );
   }
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
+    if (status !== 'granted') {
       Alert.alert(
-        "Permission Required",
-        "Sorry, we need camera roll permissions to upload images."
+        'Permission Required',
+        'Sorry, we need camera roll permissions to upload images.'
       );
       return;
     }
@@ -146,7 +144,7 @@ const AddProperty = () => {
 
       const file = {
         name: fileName,
-        type: "image/jpeg",
+        type: 'image/jpeg',
         size: blob.size,
         uri: uri,
       };
@@ -161,19 +159,19 @@ const AddProperty = () => {
 
       return imageUrl;
     } catch (error) {
-      console.error("Error uploading image:", error);
-      throw new Error("Failed to upload image");
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image');
     }
   };
 
   const handleSubmit = async () => {
     if (!name || !propertyType || !propertyDetails || !price) {
-      Alert.alert("Validation Error", "Please fill in all required fields");
+      Alert.alert('Validation Error', 'Please fill in all required fields');
       return;
     }
 
     if (!user?.$id) {
-      Alert.alert("Error", "You must be logged in to add a property");
+      Alert.alert('Error', 'You must be logged in to add a property');
       return;
     }
 
@@ -197,7 +195,7 @@ const AddProperty = () => {
         rating: 0.0,
         facilities: [],
         image: uploadedImageId,
-        geolocation: "",
+        geolocation: '',
         agent: user.$id,
         gallery: [],
         reviews: [],
@@ -210,20 +208,20 @@ const AddProperty = () => {
         propertyData
       );
 
-      Alert.alert("Success", "Property added successfully!", [
+      Alert.alert('Success', 'Property added successfully!', [
         {
-          text: "OK",
-          onPress: () => router.push("/"),
+          text: 'OK',
+          onPress: () => router.push('/'),
         },
       ]);
     } catch (error) {
-      console.error("Error submitting property:", error);
-      Alert.alert("Error", "Failed to add property. Please try again.");
+      console.error('Error submitting property:', error);
+      Alert.alert('Error', 'Failed to add property. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   if (!isAgent) {
     return null;
   }
@@ -241,7 +239,6 @@ const AddProperty = () => {
         </Text>
 
         <View className='space-y-6'>
-
           {/* Name Input */}
           <View>
             <Text className='text-base text-[#6B7280] mb-2'>Name</Text>
