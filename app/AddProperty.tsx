@@ -75,9 +75,18 @@ const AddProperty = () => {
               },
             ]
           );
-        }
+        } else if (agentDoc.status === 'rejected')
+          Alert.alert(
+            'Application Denied',
+            'Your agent application has been rejected.',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.back(),
+              },
+            ]
+          );
         setCheckingAgentStatus(false);
-        console.log('USER STATUS: ', agentDoc.status);
       } else {
         // No application found, show apply prompt
         Alert.alert(

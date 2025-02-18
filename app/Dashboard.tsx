@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { databases } from "@/lib/appwrite";
-import { useGlobalContext } from "@/lib/global-provider";
-import { useNavigation } from "@react-navigation/native";
-import { ID, Query} from "appwrite";
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { databases } from '@/lib/appwrite';
+import { useGlobalContext } from '@/lib/global-provider';
+import { useNavigation } from '@react-navigation/native';
+import { ID, Query } from 'appwrite';
+import icons from '@/constants/icons';
+import { router } from 'expo-router';
 
 interface AgentApplication {
   $id: string;
@@ -48,13 +51,12 @@ const AdminDashboard = () => {
       const response = await databases.listDocuments(
         process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
         process.env.EXPO_PUBLIC_APPWRITE_ADMINS_COLLECTION_ID!,
-        [Query.equal("email", "kaelalson58@gmail.com")]
+        [Query.equal('email', 'kaelalson58@gmail.com')]
       );
-      console.log("Admin check response:", response);
       setIsAdmin(response.documents.length > 0);
     } catch (error: any) {
-      console.error("Error checking admin status:", error);
-      console.error("Error details:", error.message, error.code);
+      console.error('Error checking admin status:', error);
+      console.error('Error details:', error.message, error.code);
       setIsAdmin(false);
     }
   };
@@ -67,8 +69,8 @@ const AdminDashboard = () => {
       );
       setApplications(response.documents as unknown as AgentApplication[]);
     } catch (error) {
-      console.error("Error fetching applications:", error);
-      Alert.alert("Error", "Failed to fetch applications");
+      console.error('Error fetching applications:', error);
+      Alert.alert('Error', 'Failed to fetch applications');
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,8 @@ const AdminDashboard = () => {
 
   const handleUpdateStatus = async (
     applicationId: string,
-    newStatus: string
+    newStatus: string,
+    agentName?: string
   ) => {
     try {
       // Update application status
@@ -84,7 +87,10 @@ const AdminDashboard = () => {
         process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
         process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
         applicationId,
-        { status: newStatus }
+        {
+          status: newStatus,
+          agent_name: agentName,
+        }
       );
 
       // Create notification for the user
@@ -96,9 +102,9 @@ const AdminDashboard = () => {
           user_id: applicationId,
           type: `application_${newStatus}`,
           message:
-            newStatus === "approved"
-              ? "Congratulations! Your agent application has been approved. You can now start adding properties."
-              : "Your agent application has been rejected.",
+            newStatus === 'approved'
+              ? 'Congratulations! Your agent application has been approved. You can now start adding properties.'
+              : 'Your agent application has been rejected.',
           read: false,
           created_at: new Date().toISOString(),
         }
@@ -107,22 +113,17 @@ const AdminDashboard = () => {
       // Refresh the applications list
       fetchApplications();
 
-      Alert.alert(
-        "Success",
-        `Application ${
-          newStatus === "approved" ? "approved" : "rejected"
-        } successfully`
-      );
+      Alert.alert('Success', `Application ${newStatus} successfully`);
     } catch (error) {
-      console.error("Error updating application:", error);
-      Alert.alert("Error", "Failed to update application status");
+      console.error('Error updating application:', error);
+      Alert.alert('Error', 'Failed to update application status');
     }
   };
 
-  if (!isAdmin) {
+  if (!loading && !isAdmin) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text className="text-lg text-red-600">
+      <SafeAreaView className='flex-1 bg-white justify-center items-center'>
+        <Text className='text-lg text-red-600'>
           You don't have access to this page
         </Text>
       </SafeAreaView>
@@ -131,81 +132,96 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#0066FF" />
+      <SafeAreaView className='flex-1 bg-white justify-center items-center'>
+        <ActivityIndicator size='large' color='#0066FF' />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4">
-        <View className="py-6">
-          <Text className="text-2xl font-bold mb-6">Agent Applications</Text>
+    <SafeAreaView className='flex-1 bg-white'>
+      <ScrollView className='flex-1 px-4'>
+        <View className='py-6'>
+          <View className='flex-row items-center px-5 py-4 border-b border-primary-200 bg-white'>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Image source={icons.backArrow} className='size-6' />
+            </TouchableOpacity>
+            <Text className='flex-1 text-center text-xl font-rubik-bold'>
+              Agent Applications
+            </Text>
+          </View>
 
           {applications.length === 0 ? (
-            <Text className="text-gray-500 text-center py-4">
+            <Text className='text-gray-500 text-center py-4'>
               No applications found
             </Text>
           ) : (
             applications.map((application) => (
               <View
                 key={application.$id}
-                className="bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-100"
+                className='bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-100'
               >
-                <View className="flex-row justify-between items-start mb-3">
+                <View className='flex-row justify-between items-start mb-3'>
                   <View>
-                    <Text className="font-semibold text-lg">
+                    <Text className='font-semibold text-lg'>
                       {application.name}
                     </Text>
-                    <Text className="text-gray-600">{application.email}</Text>
+                    <Text className='text-gray-600'>{application.email}</Text>
                   </View>
                   <View
                     className={`px-3 py-1 rounded-full ${
-                      application.status === "pending"
-                        ? "bg-yellow-100"
-                        : application.status === "approved"
-                        ? "bg-green-100"
-                        : "bg-red-100"
+                      application.status === 'pending'
+                        ? 'bg-yellow-100'
+                        : application.status === 'approved'
+                        ? 'bg-green-100'
+                        : 'bg-red-100'
                     }`}
                   >
                     <Text
                       className={`capitalize ${
-                        application.status === "pending"
-                          ? "text-yellow-800"
-                          : application.status === "approved"
-                          ? "text-green-800"
-                          : "text-red-800"
+                        application.status === 'pending'
+                          ? 'text-yellow-800'
+                          : application.status === 'approved'
+                          ? 'text-green-800'
+                          : 'text-red-800'
                       }`}
                     >
-                      {application.status}
+                      {application.status || 'rejected'}
                     </Text>
                   </View>
                 </View>
 
-                <Text className="text-gray-600 mb-4">
+                <Text className='text-gray-600 mb-4'>
                   Experience: {application.experience} years
                 </Text>
 
-                {application.status === "pending" && (
-                  <View className="flex-row space-x-2">
+                {application.status === 'pending' && (
+                  <View className='flex-row space-x-2'>
                     <TouchableOpacity
                       onPress={() =>
-                        handleUpdateStatus(application.$id, "approved")
+                        handleUpdateStatus(
+                          application.$id,
+                          'approved',
+                          application.name
+                        )
                       }
-                      className="flex-1 bg-green-500 py-2 rounded-lg"
+                      className='flex-1 bg-green-500 py-2 rounded-lg'
                     >
-                      <Text className="text-white text-center font-semibold">
+                      <Text className='text-white text-center font-semibold'>
                         Approve
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() =>
-                        handleUpdateStatus(application.$id, "rejected")
+                        handleUpdateStatus(
+                          application.$id,
+                          'rejected',
+                          application.name
+                        )
                       }
-                      className="flex-1 bg-red-500 py-2 rounded-lg"
+                      className='flex-1 bg-red-500 py-2 rounded-lg'
                     >
-                      <Text className="text-white text-center font-semibold">
+                      <Text className='text-white text-center font-semibold'>
                         Reject
                       </Text>
                     </TouchableOpacity>
