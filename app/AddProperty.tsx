@@ -17,10 +17,11 @@ import { databases, storage, ID, config } from '@/lib/appwrite';
 import { useGlobalContext } from '@/lib/global-provider';
 import { Query } from 'appwrite';
 import { ArrowLeft } from 'lucide-react-native';
+import icons from '@/constants/icons';
 
 const AddProperty = () => {
   const router = useRouter();
-  const { user, isAgent, setIsAgent } = useGlobalContext();
+  const { user, isAgent, setIsAgent,currentAgent} = useGlobalContext();
 
   const [propertyType, setPropertyType] = useState('');
   const [propertyDetails, setPropertyDetails] = useState('');
@@ -205,11 +206,11 @@ const AddProperty = () => {
         facilities: [],
         image: uploadedImageId,
         geolocation: '',
-        agent: user.$id,
+        agent: currentAgent?.$id,
         gallery: [],
         reviews: [],
       };
-
+      console.log("this is the properties",propertyData);
       await databases.createDocument(
         process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
         process.env.EXPO_PUBLIC_APPWRITE_PROPERTIES_COLLECTION_ID!,
@@ -243,9 +244,14 @@ const AddProperty = () => {
   return (
     <SafeAreaView className='bg-white h-full'>
       <ScrollView className='flex-1 px-6'>
-        <Text className='text-2xl font-rubik-bold text-[#1B1B1B] mt-6 mb-8'>
-          Add New Property
-        </Text>
+        <View className='flex-row items-center px-5 py-4 border-b border-primary-200 bg-white'>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Image source={icons.backArrow} className='size-6' />
+          </TouchableOpacity>
+          <Text className='flex-1 text-center text-xl font-rubik-bold'>
+            Add new Property
+          </Text>
+        </View>
 
         <View className='space-y-6'>
           {/* Name Input */}

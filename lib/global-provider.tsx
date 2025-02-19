@@ -4,12 +4,13 @@ import React, {
   ReactNode,
   useState,
   useEffect,
-} from "react";
-import { getCurrentUser } from "./appwrite";
-import { useAppwrite } from "./useAppwrite";
-import { Redirect } from "expo-router";
-import { databases } from "./appwrite";
-import { Query } from "appwrite";
+} from 'react';
+import { getCurrentUser } from './appwrite';
+import { useAppwrite } from './useAppwrite';
+import { Redirect } from 'expo-router';
+import { databases } from './appwrite';
+import { Query } from 'appwrite';
+import { Models } from 'react-native-appwrite';
 
 interface User {
   $id: string;
@@ -30,6 +31,9 @@ interface GlobalContextType {
   setVerifiedEmail: (email: string | null) => void;
   isAgent: boolean;
   setIsAgent: () => void;
+  agentId: string;
+  currentAgent: Models.Document | undefined;
+
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -50,6 +54,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
   const [isEmailVerified, setIsEmailVerified] = React.useState(false);
   const [verifiedEmail, setVerifiedEmail] = React.useState<string | null>(null);
   const [isAgent, setIsAgent] = useState<boolean>(false);
+  const [agent, setAgent] = useState<Models.Document>();
 
   const isLogged = !!user;
 
@@ -59,21 +64,18 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         const response = await databases.listDocuments(
           process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
           process.env.EXPO_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID!,
-          [
-            Query.equal("user_id", user.$id),
-            Query.equal("status", "approved"),
-          ]
+          [Query.equal('user_id', user.$id), Query.equal('status', 'approved')]
         );
 
-        
         if (response.documents.length > 0) {
+          setAgent(response.documents[0]);
           setIsAgent(true);
         } else {
           setIsAgent(false);
         }
-        console.log("USER", user, response.documents, isAgent);
+        console.log('USER', user, response.documents, isAgent);
       } catch (error) {
-        console.error("Error fetching agent status:", error);
+        console.error('Error fetching agent status:', error);
         setIsAgent(false);
       }
     } else {
@@ -97,6 +99,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         setVerifiedEmail,
         isAgent,
         setIsAgent: fetchUserAndAgentStatus,
+        currentAgent: agent,
       }}
     >
       {children}
@@ -107,7 +110,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
 export const useGlobalContext = (): GlobalContextType => {
   const context = useContext(GlobalContext);
   if (!context)
-    throw new Error("useGlobalContext must be used within a GlobalProvider");
+    throw new Error('useGlobalContext must be used within a GlobalProvider');
 
   return context;
 };
@@ -117,7 +120,7 @@ export const useRequireAuth = () => {
   const { isLogged, loading } = useGlobalContext();
 
   if (!loading && !isLogged) {
-    return <Redirect href="/sign-in" />;
+    return <Redirect href='/sign-in' />;
   }
 
   return null;

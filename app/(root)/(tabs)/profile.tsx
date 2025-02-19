@@ -151,7 +151,16 @@ const Profile = () => {
 
         <View className='flex flex-col mt-5 border-t pt-5 border-primary-200'>
           {settings.slice(2).map((item, index) => (
-            <SettingsItem key={index} {...item} />
+            <SettingsItem
+              key={index}
+              {...{
+                ...item,
+                onPress:
+                  item.title === 'Notifications'
+                    ? () => navigation.navigate('notifications' as never)
+                    : undefined,
+              }}
+            />
           ))}
         </View>
 

@@ -1,10 +1,11 @@
-import { databases, ID } from "@/lib/appwrite";
+import { databases, ID } from '@/lib/appwrite';
 
 export type NotificationType =
-  | "application_pending"
-  | "application_approved"
-  | "application_rejected"
-  | "pending_application";
+  | 'application_pending'
+  | 'application_approved'
+  | 'application_rejected'
+  | 'pending_property'
+  | 'pending_application';
 
 export interface Notification {
   $id: string;
@@ -13,6 +14,12 @@ export interface Notification {
   message: string;
   read: boolean;
   created_at: string;
+  property_name?: string;
+  check_in?: string;
+  check_out?: string;
+  user_email?: string;
+  status?: string;
+  property_id?: string;
 }
 
 export const createNotification = async (
@@ -21,7 +28,7 @@ export const createNotification = async (
   message: string
 ) => {
   try {
-    const notification: Omit<Notification, "$id"> = {
+    const notification: Omit<Notification, '$id'> = {
       user_id: userId,
       type,
       message,
@@ -36,8 +43,8 @@ export const createNotification = async (
       notification
     );
 
-    console.log("Notification created successfully");
+    console.log('Notification created successfully');
   } catch (error) {
-    console.error("Error creating notification:", error);
+    console.error('Error creating notification:', error);
   }
 };
